@@ -8,9 +8,6 @@
 		"CosmosDBLink_connectionString": {
 			"value": ""
 		},
-		"CosmosDemo_connectionString": {
-			"value": ""
-		},
 		"keyVaultLinkedservice_properties_typeProperties_baseUrl": {
 			"value": "@{concat('https://',linkedService().keyVaultName,'.vault.azure.net/')}"
 		}
