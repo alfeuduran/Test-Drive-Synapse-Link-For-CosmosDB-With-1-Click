@@ -1,20 +1,23 @@
 {
 	"name": "1-SalesForecastingWithAML",
 	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
 		"bigDataPool": {
 			"referenceName": "ws1sparkpool1",
 			"type": "BigDataPoolReference"
 		},
 		"sessionProperties": {
-			"driverMemory": "56g",
-			"driverCores": 8,
-			"executorMemory": "56g",
-			"executorCores": 8,
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
 			"numExecutors": 2,
 			"conf": {
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
-				"spark.dynamicAllocation.maxExecutors": "2"
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "3c55175a-a472-4f3f-9e26-ae2713d21aec"
 			}
 		},
 		"metadata": {
@@ -28,18 +31,19 @@
 				"name": "python"
 			},
 			"a365ComputeOptions": {
-				"id": "/subscriptions/4eeedd72-d937-4243-86d1-c3982a84d924/resourceGroups/nashahz0923-1/providers/Microsoft.Synapse/workspaces/mcr2rfcjdavtn5kupocws1/bigDataPools/ws1sparkpool1",
+				"id": "/subscriptions/1ef5fa80-31c7-4ee3-8610-d3be04ae85cb/resourceGroups/synapsecosmosdemo/providers/Microsoft.Synapse/workspaces/linkyy3u7ztdtta6kpocws1/bigDataPools/ws1sparkpool1",
 				"name": "ws1sparkpool1",
 				"type": "Spark",
-				"endpoint": "https://mcr2rfcjdavtn5kupocws1.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/ws1sparkpool1",
+				"endpoint": "https://linkyy3u7ztdtta6kpocws1.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/ws1sparkpool1",
 				"auth": {
 					"type": "AAD",
 					"authResource": "https://dev.azuresynapse.net"
 				},
 				"sparkVersion": "2.4",
 				"nodeCount": 5,
-				"cores": 8,
-				"memory": 56
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -163,7 +167,7 @@
 					"    .mode('append')\\\r\n",
 					"    .save()"
 				],
-				"execution_count": 16
+				"execution_count": 1
 			},
 			{
 				"cell_type": "markdown",
@@ -207,7 +211,32 @@
 					"    spark.cosmos.container 'Products'\n",
 					");"
 				],
-				"execution_count": 13
+				"execution_count": 5
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"microsoft": {
+						"language": "sparksql"
+					},
+					"collapsed": false
+				},
+				"source": [
+					"%%sql\n",
+					"\n",
+					"Select * from RetailSalesDB.Product\n",
+					""
+				],
+				"execution_count": 9
 			},
 			{
 				"cell_type": "markdown",
@@ -257,7 +286,7 @@
 					"\n",
 					"display(data)"
 				],
-				"execution_count": 14
+				"execution_count": 10
 			},
 			{
 				"cell_type": "markdown",
