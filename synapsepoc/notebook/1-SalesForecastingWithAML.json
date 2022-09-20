@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "3c55175a-a472-4f3f-9e26-ae2713d21aec"
+				"spark.autotune.trackingId": "83b6bc08-b70d-4f5e-90a8-a99033957175"
 			}
 		},
 		"metadata": {
@@ -212,6 +212,33 @@
 					");"
 				],
 				"execution_count": 5
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"microsoft": {
+						"language": "sparksql"
+					},
+					"collapsed": false
+				},
+				"source": [
+					"%%sql\n",
+					"create table if not exists Product using cosmos.olap options (\n",
+					"    spark.synapse.linkedService 'CosmosDBLink',\n",
+					"    spark.cosmos.preferredRegions 'South Central US', --Optional, Update If Required\n",
+					"    spark.cosmos.container 'Products'\n",
+					");"
+				],
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
