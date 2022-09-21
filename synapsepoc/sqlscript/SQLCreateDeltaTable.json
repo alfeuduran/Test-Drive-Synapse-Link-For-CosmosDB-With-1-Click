@@ -1,0 +1,17 @@
+{
+	"name": "SQLCreateDeltaTable",
+	"properties": {
+		"content": {
+			"query": "CREATE DATABASE COMUMDB\nUSE COMUMDB\n\nIF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDeltaFormat') \n\tCREATE EXTERNAL FILE FORMAT [SynapseDeltaFormat] \n\tWITH ( FORMAT_TYPE = DELTA)\nGO\n\nIF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'dlslinkpocfs1_linkyy3u7ztdtta6kpoc_dfs_core_windows_net') \n\tCREATE EXTERNAL DATA SOURCE [dlslinkpocfs1_linkyy3u7ztdtta6kpoc_dfs_core_windows_net] \n\tWITH (\n\t\tLOCATION = 'abfss://dlslinkpocfs1@linkyy3u7ztdtta6kpoc.dfs.core.windows.net' \n\t)\nGO\n\nCREATE EXTERNAL TABLE FactOrderDelta (\n\t[OrderKey] nvarchar(4000),\n\t[CityKey] nvarchar(4000),\n\t[CustomerKey] nvarchar(4000),\n\t[StockItemKey] nvarchar(4000),\n\t[OrderDateKey] nvarchar(4000),\n\t[PickedDateKey] nvarchar(4000),\n\t[SalespersonKey] nvarchar(4000),\n\t[PickerKey] nvarchar(4000),\n\t[WWIOrderID] nvarchar(4000),\n\t[WWIBackorderID] nvarchar(4000),\n\t[Description] nvarchar(4000),\n\t[Package] nvarchar(4000),\n\t[Quantity] nvarchar(4000),\n\t[UnitPrice] nvarchar(4000),\n\t[TaxRate] nvarchar(4000),\n\t[TotalExcludingTax] nvarchar(4000),\n\t[TaxAmount] nvarchar(4000),\n\t[TotalIncludingTax] nvarchar(4000),\n\t[LineageKey] nvarchar(4000)\n\t)\n\tWITH (\n\tLOCATION = 'synapse/workspaces/linkyy3u7ztdtta6kpocws1/warehouse/FactOrder/',\n\tDATA_SOURCE = [dlslinkpocfs1_linkyy3u7ztdtta6kpoc_dfs_core_windows_net],\n\tFILE_FORMAT = [SynapseDeltaFormat]\n\t)\nGO\n\n\nSELECT TOP 100 * FROM dbo.FactOrderDelta\nGO",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "COMUMDB",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
