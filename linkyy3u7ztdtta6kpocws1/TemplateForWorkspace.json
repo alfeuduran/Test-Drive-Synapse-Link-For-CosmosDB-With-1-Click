@@ -40,6 +40,34 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/PowerBIWorkspaceAlfeuDemo')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "PowerBIWorkspace",
+				"typeProperties": {
+					"workspaceID": "362c477a-3a68-4fcb-a925-ad329485d7f8",
+					"tenantID": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/PowerBIWorkspaceTest')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "PowerBIWorkspace",
+				"typeProperties": {
+					"workspaceID": "362c477a-3a68-4fcb-a925-ad329485d7f8",
+					"tenantID": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/keyVaultLinkedservice')]",
 			"type": "Microsoft.Synapse/workspaces/linkedServices",
 			"apiVersion": "2019-06-01-preview",
@@ -99,12 +127,12 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"content": {
-					"query": "CREATE CREDENTIAL MyCosmosDbAccountCredential\nWITH IDENTITY = 'SHARED ACCESS SIGNATURE', SECRET = 'eOzYu2gvPpwAu4entMHlJHK94F81b3GJV6OXk2mQlj8m8XIlNuBrU1zVsvPq53dmlsLZbJtyTp7OfW5IxHtYhQ==';\n\nSELECT TOP 100 *\nFROM OPENROWSET(​PROVIDER = 'CosmosDB',\n                CONNECTION = 'Account=cdblink;Database=CosmosDemoDB',\n                OBJECT = 'RetailSales',\n                SERVER_CREDENTIAL = 'MyCosmosDbAccountCredential'\n) AS [RetailSales]\n",
+					"query": "CREATE CREDENTIAL MyCosmosDbAccountCredential\nWITH IDENTITY = 'SHARED ACCESS SIGNATURE', SECRET = 'eOzYu2gvPpwAu4entMHlJHK94F81b3GJV6OXk2mQlj8m8XIlNuBrU1zVsvPq53dmlsLZbJtyTp7OfW5IxHtYhQ==';\n\nSELECT TOP 100 *\nFROM OPENROWSET(​PROVIDER = 'CosmosDB',\n                CONNECTION = 'Account=cdblink;Database=CosmosDemoDB',\n                OBJECT = 'RetailSales',\n                SERVER_CREDENTIAL = 'MyCosmosDbAccountCredential'\n) AS [RetailSales]\n\n\nselect * from [retailsalesdb].[dbo].[retailsales]",
 					"metadata": {
 						"language": "sql"
 					},
 					"currentConnection": {
-						"databaseName": "master",
+						"databaseName": "retailsalesdb",
 						"poolName": "Built-in"
 					},
 					"resultLimit": 5000
@@ -134,7 +162,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "3c55175a-a472-4f3f-9e26-ae2713d21aec"
+						"spark.autotune.trackingId": "ad42524d-e920-4fc2-a3f4-3f3b4f014ebe"
 					}
 				},
 				"metadata": {
@@ -159,13 +187,15 @@
 						"sparkVersion": "2.4",
 						"nodeCount": 5,
 						"cores": 4,
-						"memory": 28
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"# Leverage Power of Azure Synapse Link for Cosmos DB and Spark SQL\n",
 							"With Synapse Link, you can now directly connect to your Azure Cosmos DB containers from Azure Synapse Analytics and access the analytical store with no separate connectors. This notebook scenario is to \n",
@@ -351,6 +381,34 @@
 						},
 						"source": [
 							"%%sql\n",
+							"create table if not exists Product using cosmos.olap options (\n",
+							"    spark.synapse.linkedService 'CosmosDBLink',\n",
+							"    spark.cosmos.preferredRegions 'South Central US', --Optional, Update If Required\n",
+							"    spark.cosmos.container 'Products'\n",
+							");"
+						],
+						"outputs": [],
+						"execution_count": 2
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"microsoft": {
+								"language": "sparksql"
+							},
+							"collapsed": false
+						},
+						"source": [
+							"%%sql\n",
 							"\n",
 							"Select * from RetailSalesDB.Product\n",
 							""
@@ -411,6 +469,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Predictive Analytics\n",
 							"Leverage power of Azure Machine Learning's AutoML to build a Forecasting Model Predictive analytics can help us to study and discover the factors that determine the number of sales that a retail store will have in the future.This notebook scenario is [Microsoft Surface](https://www.microsoft.com/en-us/surface) sales forecasting, with artificially created data. The business challenge is a distributor that wants to predict how many units are necessary in the local warehouse to supply the stores in the area.\n",
@@ -447,6 +506,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import azureml.core\n",
 							"import pandas as pd\n",
@@ -482,6 +542,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"### Data Preparation - Feature engineering, Splitting train & test datasets\n",
 							""
@@ -489,6 +550,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# Initial variables\n",
 							"time_column_name = 'weekStarting'\n",
@@ -551,6 +613,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"### Training the Models using AutoML Forecasting\n",
 							"\n",
@@ -559,6 +622,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# Parameters\n",
 							"time_series_settings = {\n",
@@ -591,12 +655,14 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"### Retrieving the Best Model and Forecasting"
 						]
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# Retrieving the best model\n",
 							"best_run, fitted_model = remote_run.get_output()\n",
@@ -615,12 +681,14 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"### Plotting the Results"
 						]
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pandas as pd\n",
 							"import numpy as np\n",
@@ -702,6 +770,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Closing\n",
 							"\n",
@@ -1443,16 +1512,42 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/PowerBIWorkspaceAlfeuDemo')]",
-			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"name": "[concat(parameters('workspaceName'), '/SQL script 1')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
-				"annotations": [],
-				"type": "PowerBIWorkspace",
-				"typeProperties": {
-					"workspaceID": "362c477a-3a68-4fcb-a925-ad329485d7f8",
-					"tenantID": "72f988bf-86f1-41af-91ab-2d7cd011db47"
-				}
+				"content": {
+					"query": "-- This is auto-generated code\nSELECT\n    TOP 100 *\nFROM\n    OPENROWSET(\n        BULK 'https://linkyy3u7ztdtta6kpoc.dfs.core.windows.net/dlslinkpocfs1/synapse/workspaces/linkyy3u7ztdtta6kpocws1/warehouse/FactOrder/',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "master",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQLCreateDeltaTable')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "CREATE DATABASE COMUMDB\nUSE COMUMDB\n\nIF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDeltaFormat') \n\tCREATE EXTERNAL FILE FORMAT [SynapseDeltaFormat] \n\tWITH ( FORMAT_TYPE = DELTA)\nGO\n\nIF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'dlslinkpocfs1_linkyy3u7ztdtta6kpoc_dfs_core_windows_net') \n\tCREATE EXTERNAL DATA SOURCE [dlslinkpocfs1_linkyy3u7ztdtta6kpoc_dfs_core_windows_net] \n\tWITH (\n\t\tLOCATION = 'abfss://dlslinkpocfs1@linkyy3u7ztdtta6kpoc.dfs.core.windows.net' \n\t)\nGO\n\nCREATE EXTERNAL TABLE FactOrderDelta (\n\t[OrderKey] nvarchar(4000),\n\t[CityKey] nvarchar(4000),\n\t[CustomerKey] nvarchar(4000),\n\t[StockItemKey] nvarchar(4000),\n\t[OrderDateKey] nvarchar(4000),\n\t[PickedDateKey] nvarchar(4000),\n\t[SalespersonKey] nvarchar(4000),\n\t[PickerKey] nvarchar(4000),\n\t[WWIOrderID] nvarchar(4000),\n\t[WWIBackorderID] nvarchar(4000),\n\t[Description] nvarchar(4000),\n\t[Package] nvarchar(4000),\n\t[Quantity] nvarchar(4000),\n\t[UnitPrice] nvarchar(4000),\n\t[TaxRate] nvarchar(4000),\n\t[TotalExcludingTax] nvarchar(4000),\n\t[TaxAmount] nvarchar(4000),\n\t[TotalIncludingTax] nvarchar(4000),\n\t[LineageKey] nvarchar(4000)\n\t)\n\tWITH (\n\tLOCATION = 'synapse/workspaces/linkyy3u7ztdtta6kpocws1/warehouse/FactOrder/',\n\tDATA_SOURCE = [dlslinkpocfs1_linkyy3u7ztdtta6kpoc_dfs_core_windows_net],\n\tFILE_FORMAT = [SynapseDeltaFormat]\n\t)\nGO\n\n\nSELECT TOP 100 * FROM dbo.FactOrderDelta\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "COMUMDB",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
 			},
 			"dependsOn": []
 		}
