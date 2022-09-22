@@ -2,7 +2,7 @@
 	"name": "SQLAccessRetailSalesContainer",
 	"properties": {
 		"content": {
-			"query": "CREATE CREDENTIAL MyCosmosDbAccountCredential\nWITH IDENTITY = 'SHARED ACCESS SIGNATURE', SECRET = 'eOzYu2gvPpwAu4entMHlJHK94F81b3GJV6OXk2mQlj8m8XIlNuBrU1zVsvPq53dmlsLZbJtyTp7OfW5IxHtYhQ==';\n\nSELECT TOP 100 *\nFROM OPENROWSET(​PROVIDER = 'CosmosDB',\n                CONNECTION = 'Account=cdblink;Database=CosmosDemoDB',\n                OBJECT = 'RetailSales',\n                SERVER_CREDENTIAL = 'MyCosmosDbAccountCredential'\n) AS [RetailSales]\n\n\nselect * from [retailsalesdb].[dbo].[retailsales]",
+			"query": "CREATE CREDENTIAL MyCosmosDbAccountCredential\nWITH IDENTITY = 'SHARED ACCESS SIGNATURE', SECRET = 'eOzYu2gvPpwAu4entMHlJHK94F81b3GJV6OXk2mQlj8m8XIlNuBrU1zVsvPq53dmlsLZbJtyTp7OfW5IxHtYhQ==';\n\nSELECT TOP 100 *\nFROM OPENROWSET(​PROVIDER = 'CosmosDB',\n                CONNECTION = 'Account=cdblink;Database=CosmosDemoDB',\n                OBJECT = 'RetailSales',\n                SERVER_CREDENTIAL = 'MyCosmosDbAccountCredential'\n) AS [RetailSales]\n\n\nSELECT *\nFROM OPENROWSET(​PROVIDER = 'CosmosDB',\n                CONNECTION = 'Account=cdblink;Database=CosmosDemoDB',\n                OBJECT = 'complexJsonSchemaEvolution',\n                SERVER_CREDENTIAL = 'MyCosmosDbAccountCredential'\n) AS [complexJsonSchemaEvolution]\n\n\n\nSELECT JSON_VALUE(batters.batter,'id')\nFROM OPENROWSET(​PROVIDER = 'CosmosDB',\n                CONNECTION = 'Account=cdblink;Database=CosmosDemoDB',\n                OBJECT = 'complexJsonSchemaEvolution',\n                SERVER_CREDENTIAL = 'MyCosmosDbAccountCredential'\n) AS [complexJsonSchemaEvolution]\n",
 			"metadata": {
 				"language": "sql"
 			},
