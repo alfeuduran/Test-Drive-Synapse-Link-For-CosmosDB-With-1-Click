@@ -127,12 +127,72 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"content": {
-					"query": "CREATE CREDENTIAL MyCosmosDbAccountCredential\nWITH IDENTITY = 'SHARED ACCESS SIGNATURE', SECRET = 'eOzYu2gvPpwAu4entMHlJHK94F81b3GJV6OXk2mQlj8m8XIlNuBrU1zVsvPq53dmlsLZbJtyTp7OfW5IxHtYhQ==';\n\nSELECT TOP 100 *\nFROM OPENROWSET(​PROVIDER = 'CosmosDB',\n                CONNECTION = 'Account=cdblink;Database=CosmosDemoDB',\n                OBJECT = 'RetailSales',\n                SERVER_CREDENTIAL = 'MyCosmosDbAccountCredential'\n) AS [RetailSales]\n\n\nselect * from [retailsalesdb].[dbo].[retailsales]",
+					"query": "CREATE CREDENTIAL MyCosmosDbAccountCredential\nWITH IDENTITY = 'SHARED ACCESS SIGNATURE', SECRET = 'eOzYu2gvPpwAu4entMHlJHK94F81b3GJV6OXk2mQlj8m8XIlNuBrU1zVsvPq53dmlsLZbJtyTp7OfW5IxHtYhQ==';\n\nSELECT TOP 100 *\nFROM OPENROWSET(​PROVIDER = 'CosmosDB',\n                CONNECTION = 'Account=cdblink;Database=CosmosDemoDB',\n                OBJECT = 'RetailSales',\n                SERVER_CREDENTIAL = 'MyCosmosDbAccountCredential'\n) AS [RetailSales]\n\n\nSELECT *\nFROM OPENROWSET(​PROVIDER = 'CosmosDB',\n                CONNECTION = 'Account=cdblink;Database=CosmosDemoDB',\n                OBJECT = 'complexJsonSchemaEvolution',\n                SERVER_CREDENTIAL = 'MyCosmosDbAccountCredential'\n) AS [complexJsonSchemaEvolution]\n\n\n\nSELECT JSON_VALUE(batters.batter,'id')\nFROM OPENROWSET(​PROVIDER = 'CosmosDB',\n                CONNECTION = 'Account=cdblink;Database=CosmosDemoDB',\n                OBJECT = 'complexJsonSchemaEvolution',\n                SERVER_CREDENTIAL = 'MyCosmosDbAccountCredential'\n) AS [complexJsonSchemaEvolution]\n",
 					"metadata": {
 						"language": "sql"
 					},
 					"currentConnection": {
 						"databaseName": "retailsalesdb",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQLCreateDeltaTable')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "CREATE DATABASE COMUMDB\nUSE COMUMDB\n\nIF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDeltaFormat') \n\tCREATE EXTERNAL FILE FORMAT [SynapseDeltaFormat] \n\tWITH ( FORMAT_TYPE = DELTA)\nGO\n\nIF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'dlslinkpocfs1_linkyy3u7ztdtta6kpoc_dfs_core_windows_net') \n\tCREATE EXTERNAL DATA SOURCE [dlslinkpocfs1_linkyy3u7ztdtta6kpoc_dfs_core_windows_net] \n\tWITH (\n\t\tLOCATION = 'abfss://dlslinkpocfs1@linkyy3u7ztdtta6kpoc.dfs.core.windows.net' \n\t)\nGO\n\nCREATE EXTERNAL TABLE FactOrderDelta (\n\t[OrderKey] nvarchar(4000),\n\t[CityKey] nvarchar(4000),\n\t[CustomerKey] nvarchar(4000),\n\t[StockItemKey] nvarchar(4000),\n\t[OrderDateKey] nvarchar(4000),\n\t[PickedDateKey] nvarchar(4000),\n\t[SalespersonKey] nvarchar(4000),\n\t[PickerKey] nvarchar(4000),\n\t[WWIOrderID] nvarchar(4000),\n\t[WWIBackorderID] nvarchar(4000),\n\t[Description] nvarchar(4000),\n\t[Package] nvarchar(4000),\n\t[Quantity] nvarchar(4000),\n\t[UnitPrice] nvarchar(4000),\n\t[TaxRate] nvarchar(4000),\n\t[TotalExcludingTax] nvarchar(4000),\n\t[TaxAmount] nvarchar(4000),\n\t[TotalIncludingTax] nvarchar(4000),\n\t[LineageKey] nvarchar(4000)\n\t)\n\tWITH (\n\tLOCATION = 'synapse/workspaces/linkyy3u7ztdtta6kpocws1/warehouse/FactOrder/',\n\tDATA_SOURCE = [dlslinkpocfs1_linkyy3u7ztdtta6kpoc_dfs_core_windows_net],\n\tFILE_FORMAT = [SynapseDeltaFormat]\n\t)\nGO\n\n\nSELECT TOP 100 * FROM dbo.FactOrderDelta\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "COMUMDB",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQLScriptCreatenestedJsonExamples')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "if db_name() = 'master'\n    throw 50001, 'This script cannot be executed in master database. Create new database and run the script there.', 1;\n\nif SERVERPROPERTY('EngineEdition') <> 11\n    throw 50001, 'This script must be executed on Azure Synapse - Serverless SQL endpoint.', 1;\n\n------------------------------------------------------------------------------------------\n--      Part 1 - Cleanup script\n--      This part removes objects from sample database\n------------------------------------------------------------------------------------------\nDROP VIEW IF EXISTS parquet.YellowTaxi\nGO\nDROP VIEW IF EXISTS json.Books\nGO\nDROP VIEW IF EXISTS csv.YellowTaxi\nGO\nDROP VIEW IF EXISTS cosmosdb.Ecdc\nGO\nIF (EXISTS(SELECT * FROM sys.external_tables WHERE name = 'Population')) BEGIN\n    DROP EXTERNAL TABLE csv.Population\nEND\nIF (EXISTS(SELECT * FROM sys.external_tables WHERE name = 'Covid')) BEGIN\n    DROP EXTERNAL TABLE delta.Covid\nEND\nIF (EXISTS(SELECT * FROM sys.external_file_formats WHERE name = 'QuotedCsvWithHeader')) BEGIN\n    DROP EXTERNAL FILE FORMAT QuotedCsvWithHeader\nEND\nGO\nIF (EXISTS(SELECT * FROM sys.external_file_formats WHERE name = 'QuotedCsvWithoutHeader')) BEGIN\n    DROP EXTERNAL FILE FORMAT QuotedCsvWithoutHeader\nEND\nGO\nIF (EXISTS(SELECT * FROM sys.external_file_formats WHERE name = 'NativeParquet')) BEGIN\n    DROP EXTERNAL FILE FORMAT NativeParquet\nEND\nGO\nIF (EXISTS(SELECT * FROM sys.external_file_formats WHERE name = 'DeltaLakeFormat')) BEGIN\n    DROP EXTERNAL FILE FORMAT DeltaLakeFormat\nEND\nGO\nDROP SCHEMA IF EXISTS parquet;\nGO\nDROP SCHEMA IF EXISTS csv;\nGO\nDROP SCHEMA IF EXISTS json;\nGO\nDROP SCHEMA IF EXISTS cosmosdb;\nGO\nDROP SCHEMA IF EXISTS delta;\nGO\nIF (EXISTS(SELECT * FROM sys.external_data_sources WHERE name = 'SqlOnDemandDemo')) BEGIN\n    DROP EXTERNAL DATA SOURCE SqlOnDemandDemo\nEND\n\nIF (EXISTS(SELECT * FROM sys.external_data_sources WHERE name = 'DeltaLakeStorage')) BEGIN\n    DROP EXTERNAL DATA SOURCE DeltaLakeStorage\nEND\n\nIF (EXISTS(SELECT * FROM sys.external_data_sources WHERE name = 'AzureOpenData')) BEGIN\n    DROP EXTERNAL DATA SOURCE AzureOpenData\nEND\n\nIF (EXISTS(SELECT * FROM sys.external_data_sources WHERE name = 'YellowTaxi')) BEGIN\n    DROP EXTERNAL DATA SOURCE YellowTaxi\nEND\n\nIF (EXISTS(SELECT * FROM sys.external_data_sources WHERE name = 'GreenTaxi')) BEGIN\n    DROP EXTERNAL DATA SOURCE GreenTaxi\nEND\n\nIF NOT EXISTS (SELECT * FROM sys.symmetric_keys) BEGIN\n    declare @pasword nvarchar(400) = CAST(newid() as VARCHAR(400));\n    EXEC('CREATE MASTER KEY ENCRYPTION BY PASSWORD = ''' + @pasword + '''')\nEND\n\nIF EXISTS\n   (SELECT * FROM sys.credentials\n   WHERE name = 'https://sqlondemandstorage.blob.core.windows.net')\n   DROP CREDENTIAL [https://sqlondemandstorage.blob.core.windows.net]\nGO\n\nIF EXISTS\n   (SELECT * FROM sys.credentials\n   WHERE name = 'MyCosmosDbAccountCredential')\n   DROP CREDENTIAL [MyCosmosDbAccountCredential]\nGO\n\nIF EXISTS\n   (SELECT * FROM sys.database_scoped_credentials\n   WHERE name = 'sqlondemand')\n   DROP DATABASE SCOPED CREDENTIAL [sqlondemand]\nGO\n\nIF EXISTS\n   (SELECT * FROM sys.database_scoped_credentials\n   WHERE name = 'WorkspaceIdentity')\n   DROP DATABASE SCOPED CREDENTIAL [WorkspaceIdentity]\nGO\n\n\n------------------------------------------------------------------------------------------\n--      Part 2 - initialization script\n--      This part creates required objects in sample database\n------------------------------------------------------------------------------------------\n\n-- create database-scoped credential for the containers in demo storage account\n-- this credential will be used in OPENROWSET function with data source that uses relative file URL\nCREATE DATABASE SCOPED CREDENTIAL [sqlondemand]\nWITH IDENTITY='SHARED ACCESS SIGNATURE',  \nSECRET = 'sv=2018-03-28&ss=bf&srt=sco&sp=rl&st=2019-10-14T12%3A10%3A25Z&se=2061-12-31T12%3A10%3A00Z&sig=KlSU2ullCscyTS0An0nozEpo4tO5JAgGBvw%2FJX2lguw%3D'\nGO\n-- Create credential that will allow user to impersonate using Managed Identity assigned to workspace\nCREATE DATABASE SCOPED CREDENTIAL WorkspaceIdentity WITH IDENTITY = 'Managed Identity'\nGO\n\n-- SQL logins only:\n-- create server-scoped credential for the containers in demo storage account\n-- SQL logins will use this credential in OPENROWSET function without data source that uses absolute file URL\nCREATE CREDENTIAL [https://sqlondemandstorage.blob.core.windows.net]\nWITH IDENTITY='SHARED ACCESS SIGNATURE',  \nSECRET = 'sv=2018-03-28&ss=bf&srt=sco&sp=rl&st=2019-10-14T12%3A10%3A25Z&se=2061-12-31T12%3A10%3A00Z&sig=KlSU2ullCscyTS0An0nozEpo4tO5JAgGBvw%2FJX2lguw%3D'\nGO\n\nCREATE CREDENTIAL MyCosmosDbAccountCredential\nWITH IDENTITY = 'SHARED ACCESS SIGNATURE', SECRET = 's5zarR2pT0JWH9k8roipnWxUYBegOuFGjJpSjGlR36y86cW0GQ6RaaG8kGjsRAQoWMw1QKTkkX8HQtFpJjC8Hg==';\nGO\n\nCREATE SCHEMA parquet;\nGO\nCREATE SCHEMA csv;\nGO\nCREATE SCHEMA json;\nGO\nCREATE SCHEMA cosmosdb;\nGO\nCREATE SCHEMA delta;\nGO\n\n-- Create external data source secured using credential\nCREATE EXTERNAL DATA SOURCE SqlOnDemandDemo WITH (\n    LOCATION = 'https://sqlondemandstorage.blob.core.windows.net',\n    CREDENTIAL = sqlondemand\n);\nGO\n\n-- Data source referencing Delta Lake folders\nCREATE EXTERNAL DATA SOURCE DeltaLakeStorage WITH (\n    LOCATION = 'https://sqlondemandstorage.blob.core.windows.net/delta-lake',\n    CREDENTIAL = sqlondemand\n);\nGO\n\n-- Create publicly available external data sources\nCREATE EXTERNAL DATA SOURCE AzureOpenData\nWITH ( LOCATION = 'https://azureopendatastorage.blob.core.windows.net/')\nGO\nCREATE EXTERNAL DATA SOURCE YellowTaxi\nWITH ( LOCATION = 'https://azureopendatastorage.blob.core.windows.net/nyctlc/yellow/')\nGO\nCREATE EXTERNAL DATA SOURCE GreenTaxi\nWITH ( LOCATION = 'https://azureopendatastorage.blob.core.windows.net/nyctlc/green/')\nGO\n\nCREATE EXTERNAL FILE FORMAT QuotedCsvWithHeader\nWITH (  \n    FORMAT_TYPE = DELIMITEDTEXT,\n    FORMAT_OPTIONS (\n        FIELD_TERMINATOR = ',',\n        STRING_DELIMITER = '\"',\n        FIRST_ROW = 2\n    )\n);\nGO\nCREATE EXTERNAL FILE FORMAT QuotedCsvWithoutHeader\nWITH (  \n    FORMAT_TYPE = DELIMITEDTEXT,\n    FORMAT_OPTIONS (\n        FIELD_TERMINATOR = ',',\n        STRING_DELIMITER = '\"',\n        FIRST_ROW = 1\n    )\n);\nGO\nCREATE EXTERNAL FILE FORMAT NativeParquet\nWITH (  \n    FORMAT_TYPE = PARQUET\n);\nGO\nCREATE EXTERNAL FILE FORMAT DeltaLakeFormat\nWITH (  \n    FORMAT_TYPE = DELTA\n);\nGO\n\nCREATE OR ALTER VIEW cosmosdb.Ecdc\nAS SELECT *\nFROM OPENROWSET(\n      PROVIDER = 'CosmosDB',\n      CONNECTION = 'Account=synapselink-cosmosdb-sqlsample;Database=covid',\n      OBJECT = 'Ecdc',\n      SERVER_CREDENTIAL = 'MyCosmosDbAccountCredential'\n    ) with ( date_rep varchar(20), cases bigint, geo_id varchar(6) ) as rows\nGO\n\n\nCREATE EXTERNAL TABLE csv.population\n(\n    [country_code] VARCHAR (5) COLLATE Latin1_General_BIN2,\n    [country_name] VARCHAR (100) COLLATE Latin1_General_BIN2,\n    [year] smallint,\n    [population] bigint\n)\nWITH (\n    LOCATION = 'csv/population/population.csv',\n    DATA_SOURCE = SqlOnDemandDemo,\n    FILE_FORMAT = QuotedCsvWithHeader\n);\nGO\n\nCREATE VIEW parquet.YellowTaxi\nAS SELECT *, nyc.filepath(1) AS [year], nyc.filepath(2) AS [month]\nFROM\n    OPENROWSET(\n        BULK 'parquet/taxi/year=*/month=*/*.parquet',\n        DATA_SOURCE = 'SqlOnDemandDemo',\n        FORMAT='PARQUET'\n    ) AS nyc\nGO\n\nCREATE VIEW csv.YellowTaxi\nAS\nSELECT  *, nyc.filepath(1) AS [year], nyc.filepath(2) AS [month]\nFROM OPENROWSET(\n        BULK 'csv/taxi/yellow_tripdata_*-*.csv',\n        DATA_SOURCE = 'SqlOnDemandDemo',\n        FORMAT = 'CSV', \n        FIRSTROW = 2\n    )\n    WITH (\n          vendor_id VARCHAR(100) COLLATE Latin1_General_BIN2, \n          pickup_datetime DATETIME2, \n          dropoff_datetime DATETIME2,\n          passenger_count INT,\n          trip_distance FLOAT,\n          rate_code INT,\n          store_and_fwd_flag VARCHAR(100) COLLATE Latin1_General_BIN2,\n          pickup_location_id INT,\n          dropoff_location_id INT,\n          payment_type INT,\n          fare_amount FLOAT,\n          extra FLOAT,\n          mta_tax FLOAT,\n          tip_amount FLOAT,\n          tolls_amount FLOAT,\n          improvement_surcharge FLOAT,\n          total_amount FLOAT\n    ) AS nyc\nGO\n\nCREATE VIEW json.Books\nAS SELECT *\nFROM\n    OPENROWSET(\n        BULK 'json/books/*.json',\n        DATA_SOURCE = 'SqlOnDemandDemo',\n        FORMAT='CSV',\n        FIELDTERMINATOR ='0x0b',\n        FIELDQUOTE = '0x0b',\n        ROWTERMINATOR = '0x0b',\n\t\tROWSET_OPTIONS = '{\"READ_OPTIONS\":[\"ALLOW_INCONSISTENT_READS\"]}'\n    )\n    WITH (\n        content varchar(8000)\n    ) AS books;\nGO\n\nCREATE EXTERNAL TABLE delta.Covid (\n     date_rep date,\n     cases int,\n     geo_id varchar(6)\n) WITH (\n        LOCATION = 'covid', --> the root folder containing the Delta Lake files\n        data_source = DeltaLakeStorage,\n        FILE_FORMAT = DeltaLakeFormat\n);\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "TESTNESTEDJSON",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQLScriptTestNestedJson')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "SELECT\n    DateStruct, TimeStruct, TimestampStruct, DecimalStruct, FloatStruct\nFROM\n    OPENROWSET(\n        BULK 'parquet/nested/structExample.parquet',\n        DATA_SOURCE = 'SqlOnDemandDemo',\n        FORMAT='PARQUET'\n    )\n    WITH (\n        DateStruct VARCHAR(8000),\n        TimeStruct VARCHAR(8000),\n        TimestampStruct VARCHAR(8000),\n        DecimalStruct VARCHAR(8000),\n        FloatStruct VARCHAR(8000)\n    ) AS [r];\n\n\nSELECT\n    SimpleArray\nFROM\n    OPENROWSET(\n        BULK 'parquet/nested/justSimpleArray.parquet',\n        DATA_SOURCE = 'SqlOnDemandDemo',\n        FORMAT='PARQUET'\n    ) AS [r];\n\n\nSELECT\n    title = JSON_VALUE(complex_column, '$.metadata.title'),\n    first_author_name = JSON_VALUE(complex_column, '$.metadata.authors[0].first'),\n    body_text = JSON_VALUE(complex_column, '$.body_text.text'),\n    complex_column\nFROM\n    OPENROWSET( BULK 'https://azureopendatastorage.blob.core.windows.net/covid19temp/comm_use_subset/pdf_json/000b7d1517ceebb34e1e3e817695b6de03e2fa78.json',\n                FORMAT='CSV', FIELDTERMINATOR ='0x0b', FIELDQUOTE = '0x0b', ROWTERMINATOR = '0x0b' ) WITH ( complex_column varchar(MAX) ) AS docs;\n\n\n\n\n\n                \n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "TESTNESTEDJSON",
 						"poolName": "Built-in"
 					},
 					"resultLimit": 5000
@@ -162,7 +222,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "ad42524d-e920-4fc2-a3f4-3f3b4f014ebe"
+						"spark.autotune.trackingId": "83b6bc08-b70d-4f5e-90a8-a99033957175"
 					}
 				},
 				"metadata": {
@@ -187,15 +247,13 @@
 						"sparkVersion": "2.4",
 						"nodeCount": 5,
 						"cores": 4,
-						"memory": 28,
-						"automaticScaleJobs": false
+						"memory": 28
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "markdown",
-						"metadata": {},
 						"source": [
 							"# Leverage Power of Azure Synapse Link for Cosmos DB and Spark SQL\n",
 							"With Synapse Link, you can now directly connect to your Azure Cosmos DB containers from Azure Synapse Analytics and access the analytical store with no separate connectors. This notebook scenario is to \n",
@@ -469,7 +527,6 @@
 					},
 					{
 						"cell_type": "markdown",
-						"metadata": {},
 						"source": [
 							"## Predictive Analytics\n",
 							"Leverage power of Azure Machine Learning's AutoML to build a Forecasting Model Predictive analytics can help us to study and discover the factors that determine the number of sales that a retail store will have in the future.This notebook scenario is [Microsoft Surface](https://www.microsoft.com/en-us/surface) sales forecasting, with artificially created data. The business challenge is a distributor that wants to predict how many units are necessary in the local warehouse to supply the stores in the area.\n",
@@ -506,7 +563,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import azureml.core\n",
 							"import pandas as pd\n",
@@ -542,7 +598,6 @@
 					},
 					{
 						"cell_type": "markdown",
-						"metadata": {},
 						"source": [
 							"### Data Preparation - Feature engineering, Splitting train & test datasets\n",
 							""
@@ -550,7 +605,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"# Initial variables\n",
 							"time_column_name = 'weekStarting'\n",
@@ -613,7 +667,6 @@
 					},
 					{
 						"cell_type": "markdown",
-						"metadata": {},
 						"source": [
 							"### Training the Models using AutoML Forecasting\n",
 							"\n",
@@ -622,7 +675,6 @@
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"# Parameters\n",
 							"time_series_settings = {\n",
@@ -655,14 +707,12 @@
 					},
 					{
 						"cell_type": "markdown",
-						"metadata": {},
 						"source": [
 							"### Retrieving the Best Model and Forecasting"
 						]
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"# Retrieving the best model\n",
 							"best_run, fitted_model = remote_run.get_output()\n",
@@ -681,14 +731,12 @@
 					},
 					{
 						"cell_type": "markdown",
-						"metadata": {},
 						"source": [
 							"### Plotting the Results"
 						]
 					},
 					{
 						"cell_type": "code",
-						"metadata": {},
 						"source": [
 							"import pandas as pd\n",
 							"import numpy as np\n",
@@ -770,7 +818,6 @@
 					},
 					{
 						"cell_type": "markdown",
-						"metadata": {},
 						"source": [
 							"## Closing\n",
 							"\n",
@@ -1512,37 +1559,17 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/SQL script 1')]",
+			"name": "[concat(parameters('workspaceName'), '/SQL script Test')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"content": {
-					"query": "-- This is auto-generated code\nSELECT\n    TOP 100 *\nFROM\n    OPENROWSET(\n        BULK 'https://linkyy3u7ztdtta6kpoc.dfs.core.windows.net/dlslinkpocfs1/synapse/workspaces/linkyy3u7ztdtta6kpocws1/warehouse/FactOrder/',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n",
+					"query": "CREATE CREDENTIAL CosmosnestedAccount\nWITH IDENTITY = 'SHARED ACCESS SIGNATURE', SECRET = 'eOzYu2gvPpwAu4entMHlJHK94F81b3GJV6OXk2mQlj8m8XIlNuBrU1zVsvPq53dmlsLZbJtyTp7OfW5IxHtYhQ==';\n\n\nSELECT *\nFROM OPENROWSET(​PROVIDER = 'CosmosDB',\n                CONNECTION = 'Account=cdblink;Database=CosmosDemoDB',\n                OBJECT = 'complexJsonSchemaEvolution',\n                SERVER_CREDENTIAL = 'CosmosnestedAccount'\n) AS [complexJsonSchemaEvolution]\n\n\n{\"batter\":[{\"id\":\"1001\",\"type\":\"Regular\"},{\"id\":\"1002\",\"type\":\"Chocolate\"},{\"id\":\"1003\",\"type\":\"Blueberry\"},{\"id\":\"1004\",\"type\":\"Devil's Food\"}]}\n\nSELECT JSON_VALUE(batters,'batter')\nFROM OPENROWSET(​PROVIDER = 'CosmosDB',\n                CONNECTION = 'Account=cdblink;Database=CosmosDemoDB',\n                OBJECT = 'complexJsonSchemaEvolution',\n                SERVER_CREDENTIAL = 'CosmosnestedAccount'\n) AS [complexJsonSchemaEvolution]\n\n\n\n",
 					"metadata": {
 						"language": "sql"
 					},
 					"currentConnection": {
-						"databaseName": "master",
-						"poolName": "Built-in"
-					},
-					"resultLimit": 5000
-				},
-				"type": "SqlQuery"
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/SQLCreateDeltaTable')]",
-			"type": "Microsoft.Synapse/workspaces/sqlscripts",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"content": {
-					"query": "CREATE DATABASE COMUMDB\nUSE COMUMDB\n\nIF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDeltaFormat') \n\tCREATE EXTERNAL FILE FORMAT [SynapseDeltaFormat] \n\tWITH ( FORMAT_TYPE = DELTA)\nGO\n\nIF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'dlslinkpocfs1_linkyy3u7ztdtta6kpoc_dfs_core_windows_net') \n\tCREATE EXTERNAL DATA SOURCE [dlslinkpocfs1_linkyy3u7ztdtta6kpoc_dfs_core_windows_net] \n\tWITH (\n\t\tLOCATION = 'abfss://dlslinkpocfs1@linkyy3u7ztdtta6kpoc.dfs.core.windows.net' \n\t)\nGO\n\nCREATE EXTERNAL TABLE FactOrderDelta (\n\t[OrderKey] nvarchar(4000),\n\t[CityKey] nvarchar(4000),\n\t[CustomerKey] nvarchar(4000),\n\t[StockItemKey] nvarchar(4000),\n\t[OrderDateKey] nvarchar(4000),\n\t[PickedDateKey] nvarchar(4000),\n\t[SalespersonKey] nvarchar(4000),\n\t[PickerKey] nvarchar(4000),\n\t[WWIOrderID] nvarchar(4000),\n\t[WWIBackorderID] nvarchar(4000),\n\t[Description] nvarchar(4000),\n\t[Package] nvarchar(4000),\n\t[Quantity] nvarchar(4000),\n\t[UnitPrice] nvarchar(4000),\n\t[TaxRate] nvarchar(4000),\n\t[TotalExcludingTax] nvarchar(4000),\n\t[TaxAmount] nvarchar(4000),\n\t[TotalIncludingTax] nvarchar(4000),\n\t[LineageKey] nvarchar(4000)\n\t)\n\tWITH (\n\tLOCATION = 'synapse/workspaces/linkyy3u7ztdtta6kpocws1/warehouse/FactOrder/',\n\tDATA_SOURCE = [dlslinkpocfs1_linkyy3u7ztdtta6kpoc_dfs_core_windows_net],\n\tFILE_FORMAT = [SynapseDeltaFormat]\n\t)\nGO\n\n\nSELECT TOP 100 * FROM dbo.FactOrderDelta\nGO",
-					"metadata": {
-						"language": "sql"
-					},
-					"currentConnection": {
-						"databaseName": "COMUMDB",
+						"databaseName": "TESTNESTEDJSON",
 						"poolName": "Built-in"
 					},
 					"resultLimit": 5000
