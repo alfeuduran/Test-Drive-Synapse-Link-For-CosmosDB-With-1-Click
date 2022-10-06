@@ -11,6 +11,10 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'CosmosDBLink'"
 		},
+		"sqlexternalmetastore_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'sqlexternalmetastore'"
+		},
 		"keyVaultLinkedservice_properties_typeProperties_baseUrl": {
 			"type": "string",
 			"defaultValue": "@{concat('https://',linkedService().keyVaultName,'.vault.azure.net/')}"
@@ -86,6 +90,25 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/sqlexternalmetastore')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('sqlexternalmetastore_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/AutoResolveIntegrationRuntime')]",
 			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
 			"apiVersion": "2019-06-01-preview",
@@ -99,6 +122,9 @@
 							"coreCount": 8,
 							"timeToLive": 0,
 							"cleanup": true
+						},
+						"pipelineExternalComputeScaleProperties": {
+							"timeToLive": 60
 						}
 					}
 				},
@@ -118,6 +144,26 @@
 			"properties": {
 				"type": "ManagedIdentity",
 				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL script Test')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "CREATE CREDENTIAL CosmosnestedAccount\nWITH IDENTITY = 'SHARED ACCESS SIGNATURE', SECRET = 'eOzYu2gvPpwAu4entMHlJHK94F81b3GJV6OXk2mQlj8m8XIlNuBrU1zVsvPq53dmlsLZbJtyTp7OfW5IxHtYhQ==';\n\n\nSELECT *\nFROM OPENROWSET(​PROVIDER = 'CosmosDB',\n                CONNECTION = 'Account=cdblink;Database=CosmosDemoDB',\n                OBJECT = 'complexJsonSchemaEvolution',\n                SERVER_CREDENTIAL = 'CosmosnestedAccount'\n) AS [complexJsonSchemaEvolution]\n\n\n{\"batter\":[{\"id\":\"1001\",\"type\":\"Regular\"},{\"id\":\"1002\",\"type\":\"Chocolate\"},{\"id\":\"1003\",\"type\":\"Blueberry\"},{\"id\":\"1004\",\"type\":\"Devil's Food\"}]}\n\nSELECT JSON_VALUE(batters,'batter')\nFROM OPENROWSET(​PROVIDER = 'CosmosDB',\n                CONNECTION = 'Account=cdblink;Database=CosmosDemoDB',\n                OBJECT = 'complexJsonSchemaEvolution',\n                SERVER_CREDENTIAL = 'CosmosnestedAccount'\n) AS [complexJsonSchemaEvolution]\n\n\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "TESTNESTEDJSON",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
 			},
 			"dependsOn": []
 		},
@@ -1533,6 +1579,12 @@
 				"nodeSizeFamily": "MemoryOptimized",
 				"sparkVersion": "2.4",
 				"isComputeIsolationEnabled": false,
+				"sparkConfigProperties": {
+					"configurationType": "Artifact",
+					"filename": "sparkConfigurationMetastore",
+					"content": "{\"name\":\"sparkConfigurationMetastore\",\"properties\":{\"configs\":{\"spark.sql.hive.metastore.version\":\"2.3\",\"spark.hadoop.hive.synapse.externalmetastore.linkedservice.name\":\"sqlexternalmetastore\",\"spark.sql.hive.metastore.jars\":\"/opt/hive-metastore/lib-2.3/*:/usr/hdp/current/hadoop-client/lib/*\"},\"annotations\":[],\"type\":\"Microsoft.Synapse/workspaces/sparkconfigurations\",\"description\":\"\",\"notes\":\"\",\"created\":\"2022-09-30T15:07:35.2200000-03:00\",\"createdBy\":\"alduran@microsoft.com\",\"configMergeRule\":{\"admin.currentOperation.spark.sql.hive.metastore.version\":\"replace\",\"admin.currentOperation.spark.hadoop.hive.synapse.externalmetastore.linkedservice.name\":\"replace\",\"admin.currentOperation.spark.sql.hive.metastore.jars\":\"replace\"}}}",
+					"time": "2022-09-30T18:08:54.0070017Z"
+				},
 				"sessionLevelPackagesEnabled": false,
 				"annotations": []
 			},
@@ -1559,22 +1611,258 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/SQL script Test')]",
+			"name": "[concat(parameters('workspaceName'), '/SharedMetadataTest')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "ws1sparkpool1",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "4151de03-abfd-47fe-a036-044f810e5e44"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/1ef5fa80-31c7-4ee3-8610-d3be04ae85cb/resourceGroups/synapsecosmosdemo/providers/Microsoft.Synapse/workspaces/linkyy3u7ztdtta6kpocws1/bigDataPools/ws1sparkpool1",
+						"name": "ws1sparkpool1",
+						"type": "Spark",
+						"endpoint": "https://linkyy3u7ztdtta6kpocws1.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/ws1sparkpool1",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "2.4",
+						"nodeCount": 5,
+						"cores": 4,
+						"memory": 28,
+						"automaticScaleJobs": false
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"spark.sql(\"show databases\").show()"
+						],
+						"outputs": [],
+						"execution_count": 1
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"microsoft": {},
+							"collapsed": false
+						},
+						"source": [
+							"spark.sql(\"show tables\").show()"
+						],
+						"outputs": [],
+						"execution_count": 3
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"microsoft": {}
+						},
+						"source": [
+							"spark.sql(\"select * from sharedflights\").show()"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sparkConfigSharedMetastore')]",
+			"type": "Microsoft.Synapse/workspaces/sparkConfigurations",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"configs": {
+					"spark.sql.hive.metastore.version": "2.3",
+					"spark.hadoop.hive.synapse.externalmetastore.linkedservice.name": "sqlexternalmetastore",
+					"spark.sql.hive.metastore.jars": "/opt/hive-metastore/lib-2.3/*:/usr/hdp/current/hadoop-client/lib/*"
+				},
+				"created": "2022-10-06T13:42:29.8280000-03:00",
+				"createdBy": "alduran@microsoft.com",
+				"annotations": [],
+				"configMergeRule": {
+					"artifact.currentOperation.spark.sql.hive.metastore.version": "replace",
+					"artifact.currentOperation.spark.hadoop.hive.synapse.externalmetastore.linkedservice.name": "replace",
+					"artifact.currentOperation.spark.sql.hive.metastore.jars": "replace"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL script 1')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"content": {
-					"query": "CREATE CREDENTIAL CosmosnestedAccount\nWITH IDENTITY = 'SHARED ACCESS SIGNATURE', SECRET = 'eOzYu2gvPpwAu4entMHlJHK94F81b3GJV6OXk2mQlj8m8XIlNuBrU1zVsvPq53dmlsLZbJtyTp7OfW5IxHtYhQ==';\n\n\nSELECT *\nFROM OPENROWSET(​PROVIDER = 'CosmosDB',\n                CONNECTION = 'Account=cdblink;Database=CosmosDemoDB',\n                OBJECT = 'complexJsonSchemaEvolution',\n                SERVER_CREDENTIAL = 'CosmosnestedAccount'\n) AS [complexJsonSchemaEvolution]\n\n\n{\"batter\":[{\"id\":\"1001\",\"type\":\"Regular\"},{\"id\":\"1002\",\"type\":\"Chocolate\"},{\"id\":\"1003\",\"type\":\"Blueberry\"},{\"id\":\"1004\",\"type\":\"Devil's Food\"}]}\n\nSELECT JSON_VALUE(batters,'batter')\nFROM OPENROWSET(​PROVIDER = 'CosmosDB',\n                CONNECTION = 'Account=cdblink;Database=CosmosDemoDB',\n                OBJECT = 'complexJsonSchemaEvolution',\n                SERVER_CREDENTIAL = 'CosmosnestedAccount'\n) AS [complexJsonSchemaEvolution]\n\n\n\n",
+					"query": "SELECT TOP (100) [_rid]\n,[_ts]\n,[productCode]\n,[wholeSaleCost]\n,[id]\n,[basePrice]\n,[_etag]\n FROM [default].[dbo].[product]",
 					"metadata": {
 						"language": "sql"
 					},
 					"currentConnection": {
-						"databaseName": "TESTNESTEDJSON",
+						"databaseName": "default",
 						"poolName": "Built-in"
 					},
 					"resultLimit": 5000
 				},
 				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Notebook 1')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "ws1sparkpool1",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "8b1142f1-140d-4c4b-859a-ede7195a267f"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/1ef5fa80-31c7-4ee3-8610-d3be04ae85cb/resourceGroups/synapsecosmosdemo/providers/Microsoft.Synapse/workspaces/linkyy3u7ztdtta6kpocws1/bigDataPools/ws1sparkpool1",
+						"name": "ws1sparkpool1",
+						"type": "Spark",
+						"endpoint": "https://linkyy3u7ztdtta6kpocws1.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/ws1sparkpool1",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "2.4",
+						"nodeCount": 5,
+						"cores": 4,
+						"memory": 28,
+						"automaticScaleJobs": false
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "python"
+							}
+						},
+						"source": [
+							"%%pyspark\n",
+							"df = spark.sql(\"SELECT * FROM default.product\")\n",
+							"# df.show(10)"
+						],
+						"outputs": [],
+						"execution_count": 6
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
 			},
 			"dependsOn": []
 		}
