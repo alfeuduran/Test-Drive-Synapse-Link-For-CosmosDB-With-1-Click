@@ -5,11 +5,17 @@
 		"workspaceName": {
 			"value": "linkyy3u7ztdtta6kpocws1"
 		},
+		"AzureDataLakeStorageSynapse_accountKey": {
+			"value": ""
+		},
 		"CosmosDBLink_connectionString": {
 			"value": ""
 		},
 		"sqlexternalmetastore_connectionString": {
 			"value": ""
+		},
+		"AzureDataLakeStorageSynapse_properties_typeProperties_url": {
+			"value": "https://synapseaccountalfeu.dfs.core.windows.net/"
 		},
 		"keyVaultLinkedservice_properties_typeProperties_baseUrl": {
 			"value": "@{concat('https://',linkedService().keyVaultName,'.vault.azure.net/')}"
