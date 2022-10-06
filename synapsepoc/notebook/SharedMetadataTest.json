@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "3f6729b3-d7d4-45aa-8acb-52ac1608eb54"
+				"spark.autotune.trackingId": "af9c3b89-1a27-4abe-8b55-65f245957dfb"
 			}
 		},
 		"metadata": {
@@ -72,7 +72,7 @@
 				"source": [
 					"spark.sql(\"show tables\").show()"
 				],
-				"execution_count": 3
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -88,9 +88,9 @@
 					}
 				},
 				"source": [
-					"spark.sql(\"select * from sharedflights\").show()"
+					"spark.sql(\"select * from default.sharedflights\").show()"
 				],
-				"execution_count": null
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
