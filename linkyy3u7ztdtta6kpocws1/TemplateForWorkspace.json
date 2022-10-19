@@ -1721,7 +1721,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "61662502-e45e-4060-90b0-0a6ce6a58e9a"
+						"spark.autotune.trackingId": "0e8a6bfb-d5d0-43a1-ab33-e8bbd6bf1e83"
 					}
 				},
 				"metadata": {
@@ -1746,8 +1746,7 @@
 						"sparkVersion": "2.4",
 						"nodeCount": 5,
 						"cores": 4,
-						"memory": 28,
-						"automaticScaleJobs": false
+						"memory": 28
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -2008,6 +2007,42 @@
 			"type": "Microsoft.Synapse/workspaces/managedVirtualNetworks",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SparkToCosmosDBJob')]",
+			"type": "Microsoft.Synapse/workspaces/sparkJobDefinitions",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"targetBigDataPool": {
+					"referenceName": "ws1sparkpool1",
+					"type": "BigDataPoolReference"
+				},
+				"requiredSparkVersion": "2.4",
+				"language": "scala",
+				"jobProperties": {
+					"name": "SparkToCosmosDBJob",
+					"file": "abfss://dlslinkpocfs1@linkyy3u7ztdtta6kpoc.dfs.core.windows.net/synapse/workspaces/linkyy3u7ztdtta6kpocws1/batchjobs/Spark%20job%20definition%201/HBaseSparkProject-assembly-1.0-SNAPSHOT.jar",
+					"className": "org.example.main_job",
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "8b49b9ad-9fcf-4225-9852-e443c61226d6"
+					},
+					"args": [],
+					"jars": [],
+					"pyFiles": [
+						""
+					],
+					"files": [],
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2
+				}
+			},
 			"dependsOn": []
 		}
 	]
