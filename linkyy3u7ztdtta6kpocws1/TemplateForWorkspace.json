@@ -2022,13 +2022,13 @@
 				"language": "scala",
 				"jobProperties": {
 					"name": "SparkToCosmosDBJob",
-					"file": "abfss://dlslinkpocfs1@linkyy3u7ztdtta6kpoc.dfs.core.windows.net/synapse/workspaces/linkyy3u7ztdtta6kpocws1/batchjobs/Spark%20job%20definition%201/HBaseSparkProject-assembly-1.0-SNAPSHOT.jar",
+					"file": "abfss://dlslinkpocfs1@linkyy3u7ztdtta6kpoc.dfs.core.windows.net/synapse/workspaces/linkyy3u7ztdtta6kpocws1/batchjobs/SparkToCosmosDBJob/HBaseSparkProject-assembly-1.0-SNAPSHOT.jar",
 					"className": "org.example.main_job",
 					"conf": {
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "8b49b9ad-9fcf-4225-9852-e443c61226d6"
+						"spark.autotune.trackingId": "0f0bfbf7-a262-4c24-9a7e-9d1bd5287cf5"
 					},
 					"args": [],
 					"jars": [],
