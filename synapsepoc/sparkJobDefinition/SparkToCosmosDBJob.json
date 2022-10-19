@@ -1,0 +1,33 @@
+{
+	"name": "SparkToCosmosDBJob",
+	"properties": {
+		"targetBigDataPool": {
+			"referenceName": "ws1sparkpool1",
+			"type": "BigDataPoolReference"
+		},
+		"requiredSparkVersion": "2.4",
+		"language": "scala",
+		"jobProperties": {
+			"name": "SparkToCosmosDBJob",
+			"file": "abfss://dlslinkpocfs1@linkyy3u7ztdtta6kpoc.dfs.core.windows.net/synapse/workspaces/linkyy3u7ztdtta6kpocws1/batchjobs/Spark%20job%20definition%201/HBaseSparkProject-assembly-1.0-SNAPSHOT.jar",
+			"className": "org.example.main_job",
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "8b49b9ad-9fcf-4225-9852-e443c61226d6"
+			},
+			"args": [],
+			"jars": [],
+			"pyFiles": [
+				""
+			],
+			"files": [],
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2
+		}
+	}
+}
